@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <title>SMS</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" integrity="sha512-HK5fgLBL+xu6dm/Ii3z4xhlSUyZgTT9tuc/hSrtw6uzJOvgRr2a9jyxxT1ely+B+xFAmJKVSTbpM/CuL7qxO8w==" crossorigin="anonymous" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}" />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row rounded-lg overflow-auto shadow">
+        <!-- Chat Box-->
+        <div class="col-10 px-0 container-fluid">
+          <div class="px-1 py-1 chat-box bg-white" id="chatbox">
+            <div id="message_holder"></div>
+          </div>
+          <!-- Typing area -->
+          <div id="input_div">
+            <div class="input-group">
+              <input type="text" placeholder="Type a message" id="message_body" class="form-control rounded-0 border-0 py-4 bg-light">
+              <div class="input-group-append bg-white">
+                <button id="send_message" class="btn btn-link"> <i class="fas fa-paper-plane"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js" integrity="sha512-YybopSVjZU0fe8TY4YDuQbP5bhwpGBE/T6eBUEZ0usM72IWBfWrgVI13qfX4V2A/W7Hdqnm7PIOYOwP9YHnICw==" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var socket = io.connect('http://127.0.0.1:5000');
+      var private_socket = io('http://127.0.0.1:5000/messaging', {
+        'multiplex': false
+      });
+      const from_num = '{{ from_num }}';
+      const to_num = '{{ to_num }}';
+      const uid = '{{ uid }}';
+
+      private_socket.on('connect', function() {
+        console.log(uid);
+        private_socket.emit('storesession', uid);
+      });
+
+      private_socket.on('response', function(msg) {
+        console.log("Came here")
+        console.log(msg)
+        $('#message_holder').append('<div class="media w-50 mb-3"><img src="https://media-exp1.licdn.com/dms/image/C560BAQFDkhSG-fctaw/company-logo_200_200/0/1551383026151?e=1622678400&v=beta&t=Ov8chuNNsrI6xy1uW2UkNor2QBVBn0b_hvrZ9ZOae08" alt="user" width="50" class="rounded-circle">\
+            <div class="media-body ml-3">\
+            <div class="bg-light rounded py-2 px-3 mb-2">\
+            <p class="text-small mb-0 text-muted">' + msg.body + '</p>\
+            </div>\
+            <p class="small text-muted">' + msg.timestamp + '</p>\
+            </div>\
+            </div>');
+        var d = $('#chatbox');
+        d.animate({ scrollTop: d.prop('scrollHeight') }, 500);
+      });
+
+      $('#send_message').on('click', function() {
+        var data = '{"body": "' + $("#message_body").val() + '", "from": "' + from_num + '", "to": "' + to_num + '"}';
+        console.log(data)
+        var date = new Date()
+        private_socket.emit('send_message', {
+          'body': $("#message_body").val(),
+          'from': from_num,
+          'to': to_num
+        });
+      });
+
+      private_socket.on('response_sender', function(msg) {
+        console.log("Came here")
+        console.log(msg)
+        $('#message_holder').append('<div class="media w-50 ml-auto mb-3">\
+              <div class="media-body">\
+                <div class="bg-primary rounded py-2 px-3 mb-2">\
+                  <p class="text-small mb-0 text-white">' + msg.body + '</p>\
+                </div>\
+                <p class="small text-muted">' + msg.timestamp + '</p>\
+              </div>\
+            </div>\
+          </div>');
+
+        var d = $('#chatbox');
+        d.animate({ scrollTop: d.prop('scrollHeight') }, 500);
+      });
+
+    </script>
+  </body>
+
+</html>
